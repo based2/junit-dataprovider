@@ -3,6 +3,8 @@ package com.tngtech.java.junit.dataprovider;
 import static com.tngtech.java.junit.dataprovider.common.Preconditions.checkArgument;
 import static com.tngtech.java.junit.dataprovider.common.Preconditions.checkNotNull;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
@@ -91,10 +93,25 @@ public class DataProviderFrameworkMethod extends FrameworkMethod {
         }
 
         try {
-            return nameFormatter.newInstance().format(getMethod(), idx, Arrays.asList(parameters));
+            DataProviderTestNameFormatter instance = null;
+            for (Constructor<?> constructor : nameFormatter.getConstructors()) {
+                if (constructor.getParameterCount() == 1 && String.class.equals(constructor.getParameterTypes()[0])) {
+                    instance = (DataProviderTestNameFormatter) constructor.newInstance(nameFormat);
+                    break;
+                }
+            }
+            if (instance == null) {
+                instance = nameFormatter.newInstance();
+            }
+            return instance.format(getMethod(), idx, Arrays.asList(parameters));
         } catch (InstantiationException e) {
             throw new IllegalStateException(String
-                    .format("Could not instantiate name formatter using default constructor '%s'.", nameFormatter),
+                    .format("Could not instantiate name formatter using default constructor of '%s'.", nameFormatter),
+                    e);
+        } catch (InvocationTargetException e) {
+            throw new IllegalStateException(
+                    String.format("Constructor used to instantiate name formatter '%s' throws exception: %s.",
+                            nameFormatter, e.getMessage()),
                     e);
         } catch (IllegalAccessException e) {
             throw new IllegalStateException(
