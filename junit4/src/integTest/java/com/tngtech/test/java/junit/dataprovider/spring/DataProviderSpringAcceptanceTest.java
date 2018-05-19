@@ -56,7 +56,7 @@ public class DataProviderSpringAcceptanceTest {
 
     @Test
     @UseDataProvider(value = "dataProviderCreateGreeting")
-    public void testCreateGreeting(String name) throws Exception {
+    public void testCreateGreetingDataProvider(String name) throws Exception {
         System.out.println("test");
 
         // When:
@@ -64,6 +64,17 @@ public class DataProviderSpringAcceptanceTest {
 
         // Then:
         assertThat(result).containsSequence("Hello", name, "!");
+    }
+
+    @Test
+    public void testCreateGreetingNoDataProvider() throws Exception {
+        System.out.println("test");
+
+        // When:
+        String result = greeter.createGreetingFor("Test");
+
+        // Then:
+        assertThat(result).isEqualTo("Hello Test!");
     }
 
     @Configuration
